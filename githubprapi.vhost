@@ -1,0 +1,15 @@
+upstream githubprapi {
+    server unix:///tmp/GitHubPRAPI.sock;
+}
+
+server {
+    listen 80;
+    server_name default;
+
+    location / {
+        proxy_pass http://githubprapi;
+        proxy_connect_timeout 60s;
+		proxy_set_header Host $host;
+		proxy_set_header X-Forwarded-For $remote_addr;
+    }
+}
