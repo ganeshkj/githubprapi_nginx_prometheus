@@ -13,6 +13,12 @@ docker build -t githubpr .
 ## How to run
 
 ```sh
+docker run -d --rm -it -p 80:80 -p 9147:9147 githubpr
+```
+
+or pull image directly from Dockerhub and run as below
+
+```sh
 docker pull avava/githubpr
 docker run -d --rm -it -p 80:80 -p 9147:9147 avava/githubpr:0.1.12
 ```
