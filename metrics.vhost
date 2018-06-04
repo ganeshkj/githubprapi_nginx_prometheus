@@ -4,10 +4,8 @@ lua_package_path '/usr/local/openresty/luajit/lib/?.lua;;';
 init_by_lua_block {
     prometheus = require("prometheus").init("prometheus_metrics")
 
-    http_requests = prometheus:counter(
+    http_requests = prometheus:histogram(
         "nginx_http_requests", "Number of HTTP requests", {"host", "status"})
-    http_connections = prometheus:gauge(
-        "nginx_http_connections", "Number of HTTP connections", {"state"})
     http_latency = prometheus:histogram(
         "nginx_http_request_duration_seconds", "HTTP request latency", {"host"})
 }
@@ -17,24 +15,19 @@ log_by_lua_block {
     local host = ngx.var.host
     local status = ngx.var.status
 
-    http_requests:inc(1, {host, status})
+    http_requests:observe(1,{host, status})
     http_latency:observe(ngx.now() - ngx.req.start_time(), {host})
 
 }
 
 server {
     listen 9147;
+    server_name default;
     #allow 10.2.0.0/16;
     #deny all;
 
     location /metrics {
         content_by_lua_block {
-            if ngx.var.connections_active ~= nil then
-                http_connections:set(ngx.var.connections_active, {"active"})
-            end
-		http_connections:set(ngx.var.connections_reading, {"reading"})
-                http_connections:set(ngx.var.connections_waiting, {"waiting"})
-                http_connections:set(ngx.var.connections_writing, {"writing"})
             prometheus:collect()
         }
     }
